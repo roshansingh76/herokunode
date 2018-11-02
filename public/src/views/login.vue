@@ -44,8 +44,10 @@ export default {
   methods: {
     onSubmit (evt) {
       evt.preventDefault();
+     
       NProgress.start();
       this.$router.push('/otp');
+       NProgress.done();
 		
       //alert(JSON.stringify(this.form));
     },
