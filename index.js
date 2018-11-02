@@ -52,7 +52,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.static(__dirname + "/node_modules/bootstrap/dist"));
 
-var store = new MongoDBStore({
+/*var store = new MongoDBStore({
   uri: url,
   collection: "session"
 });
@@ -78,7 +78,7 @@ app.use(
     resave: true,
     saveUninitialized: true
   })
-);
+);*/
 
 app.use(passport.initialize());
 app.use(passport.session());
