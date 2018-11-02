@@ -1,0 +1,254 @@
+extends ./../../layout/adminlayout.jade
+block content
+    .row
+        .col-lg-12.card
+            .card-header
+                .col-sm-8
+                    h4 Category
+                .col-sm-4
+    section.forms
+        #app.container-fluid
+            .row
+                .col-lg-8
+                    div.topnav
+                        input( type="text" placeholder="Search..", v-model="search" )
+                    div.alert(style="padding:0px !important") {{success}}
+                    table.table.table-bordred.table-striped.table-bordered
+                        thead.thead-dark
+                            th(scope='col') #
+                            th(scope='col') Category
+                            th(scope='col') Parrent Category
+                            th(scope='col') Slug
+                            th(scope='col') Action
+                        tbody
+                            tr( v-for="data,key in results")
+                                td {{key+1 }}
+                                   
+                                td {{data.category_name}} 
+                                td {{ getParentcategory(data.parentId,data._id) }}
+                                    p(:id="data._id" ) 
+                                td {{data.slug}}
+                                td
+                                    a.edit(title="Edit" data-toggle="tooltip",@click="editItem(data._id)")
+                                        i.fa.fa-pencil-square-o.fa-2x.text-success
+                                    &nbsp;&nbsp;
+                                    a.delete(title="Edit" data-toggle="tooltip",@click="deleteItem(data._id)")
+                                        i.fa.fa-minus-circle.fa-2x.text-danger
+                            
+                .col-lg-4      
+                    .card
+                        .card-header.d-flex.align-items-center
+                            h4 Add Category
+                        .card-body
+                            form(action="")
+                                div#msg {{msg}}
+                                .form-group
+                                    input(type="hidden" v-model="id",name="id", id="id")
+                                    input.form-control(type='text' id='category', v-model="category", placeholder='Enter category name' name='category')
+                                .form-group
+                                    input.form-control(type='text' id='slug', v-model="slug", placeholder='Enter slug name' name='slug')
+                                .form-group
+                                    select#parentcategory.form-control(name="parentcategory",v-model="parentcategory")
+                                            option(value='') Please Select Category
+                                            <option v-for="data in results" :value="data._id"> {{data.category_name}}</option>
+                                            
+                             
+                                br
+                                .form-group
+                                    button.mr-3.btn.btn-primary(type="button", v-if="isHiddenadd", v-on:click="addcategory") 
+                                        |Add Category
+                                .form-group
+                                    button.mr-3.btn.btn-primary(type="button", v-if="isHiddenupdate" ,v-on:click="updatecategory") 
+                                        |Update Category
+    
+                
+    script.
+        new Vue({
+            el: "#app",
+
+            data: {
+                category: '',
+                carr: '',
+                isHiddenadd: true,
+                isHiddenupdate: false,
+                id: '',
+                slug: '',
+                msg: '',
+                results: [],
+                success: '',
+                parentcategory: '',
+                search: '',
+
+            },
+            mounted() {
+                this.list();
+
+            },
+            computed: {
+
+            },
+            watch: {
+                search(after, before) {
+                    this.searchfromDb();
+                }
+            },
+            methods: {
+
+                searchfromDb: function() {
+
+                    $.get('/admin/category/searchCategory?term=' + $.trim(this.search)).then(response => {
+                        this.results = response.data
+                    });
+
+                },
+                list: function() {
+                    $.get('/admin/category/getCategory').then(response => {
+                        this.results = response.data
+                    });
+                },
+                getParentcategory: function(id, itemid) {
+                    var value;
+                    $.ajax({
+                        url: '/admin/category/getParentcategory/' + id,
+                        type: 'get',
+                        success: function(res) {
+                            $('#' + itemid).html(res['data']);
+
+                        }
+                    });
+
+
+                },
+                updatecategory: function(evt) {
+                    evt.preventDefault();
+                    NProgress.start();
+                    $.post('/admin/category/updateCategory', {
+                            _id: this.id,
+                            category: this.category,
+                            slug: this.slug,
+                            parentcategory: this.parentcategory,
+                        })
+                        .then((response) => {
+                            NProgress.done();
+                            if (response.status === 'success') {
+                                $('#msg').css('display', 'block');
+                                $('#msg').addClass('alert alert-success').delay(1000).fadeOut();
+                                this.msg = response.message;
+                                this.category = '';
+                                this.slug = '';
+                                this.id = '';
+                                this.parentcategory = null;
+                                this.fetchData();
+                                this.isHiddenadd = true;
+                                this.isHiddenupdate = false;
+
+                            } else {
+                                $('#msg').css('display', 'block');
+                                $('#msg').addClass('alert alert-success').delay(1000).fadeOut();
+
+                                this.msg = response.message;
+
+
+                            }
+
+
+                        })
+                },
+                addcategory: function(evt) {
+                    evt.preventDefault();
+                    NProgress.start();
+                    $.post('/admin/category/addCategory', {
+                            category: this.category,
+                            slug: this.slug,
+                            parentcategory: this.parentcategory,
+                        })
+                        .then((response) => {
+                            NProgress.done();
+                            if (response.status === 'success') {
+                                $('#msg').css('display', 'block');
+                                $('#msg').addClass('alert alert-success').delay(1000).fadeOut();
+                                this.msg = response.message;
+                                this.category = '';
+                                this.slug = '';
+                                this.parentcategory = null;
+
+                                this.fetchData();
+                            } else {
+                                $('#msg').css('display', 'block');
+                                $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+
+                                if (response.status == 'faild') {
+                                    this.msg = response.message;
+                                }
+
+                            }
+
+
+                        })
+                },
+                editItem: function(id) {
+                    NProgress.start();
+                    this.isHiddenadd = false;
+                    this.isHiddenupdate = true;
+                    $.get('/admin/category/editCategory/' + id).then(response => {
+                        if (response.status === 'success') {
+                            NProgress.done();
+                            this.category = response.data.category_name;
+                            this.id = response.data._id;
+                            this.slug = response.data.slug;
+                            this.parentcategory = response.data.parentId;
+
+                        }
+                    });
+                },
+                deleteItem: function(id) {
+                    this.$dialog.confirm("If you delete this record, it'll be gone forever.", {
+                            loader: true
+
+                        })
+                        .then((dialog) => {
+
+                            $.get('/admin/category/deleteCategory/' + id).then(response => {
+                                if (response.status === 'success') {
+                                    setTimeout(() => {
+                                        console.log('Delete action completed ');
+                                        dialog.close();
+                                          $('.alert').addClass('alert-success').delay(1000).fadeOut();
+                                          this.success = response.message; 
+                                    }, 1000);
+
+
+                                  
+                                    this.fetchData();
+                                }
+                            });
+
+                        })
+                        .catch(() => {
+                            // Triggered when cancel button is clicked
+
+                            console.log('Delete aborted');
+                        });
+
+
+
+
+                },
+                fetchData: function(evt) {
+                    NProgress.start();
+                    $.get('/admin/category/getCategory').then(response => {
+                        if (response.status === 'success') {
+                            NProgress.done();
+                            this.results = response.data
+                        };
+
+                    });
+                },
+
+
+
+            }
+
+        })
+       
+        

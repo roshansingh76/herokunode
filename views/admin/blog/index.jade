@@ -1,0 +1,146 @@
+extends ./../../layout/adminlayout.jade
+block content
+    .row
+        .col-lg-12
+            .card
+                .card-header
+                    .row
+                        .col-sm-8
+                            h4 Blog
+                        .col-sm-4
+                            a.btn.btn-primary.pull-right(href="/admin/blog/addblogs",) 
+                                i.fa.fa-plus  Add Blog
+                    
+                      
+    section.forms
+        #app.container-fluid
+            .row
+                .col-lg-12
+                    div.topnav
+                        input( type="text" placeholder="Search..", v-model="search" )
+                    br    
+                    div {{success}}  
+                    table.table.table-bordred.table-striped.table-bordered
+                        thead.thead-dark
+                            th(scope='col') #
+                            th(scope='col') Image
+                            th(scope='col') Title
+                            th(scope='col') Created Date
+                            th(scope='col') Status
+                            th(scope='col') Action
+                        tbody
+                            tr( v-for="data,key in results")
+                                td 
+                                    {{key+1 }}
+                                td  
+                                    center
+                                        a(:href="getImgUrl(data.image)"  data-fancybox="gallery" )
+                                            <img :src="getImgUrl(data.image)" height="50px;" width="50px;" :alt="data.title"/>
+                                td  {{data.title}}
+                                td  {{data.created_at}}
+                                td  {{data.blogstatusinfo.statusname}} 
+                                td
+                                    a.edit(title="Edit" style="cursor:pointer;" data-toggle="tooltip",@click="editItem(data._id)")
+                                        i.fa.fa-pencil-square-o.fa-2x.text-success
+                                    &nbsp;&nbsp;
+                                    a.delete(title="Delete" style="cursor:pointer;" data-toggle="tooltip",@click="deleteItem(data._id)")
+                                        i.fa.fa-minus-circle.fa-2x.text-danger
+        link(rel='stylesheet', href='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.2/dist/jquery.fancybox.min.css')
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js")
+        script.
+            $(document).ready(function() {
+                $(".fancybox").fancybox({
+                    prevEffect		: 'none',
+                    nextEffect		: 'none',
+                    closeBtn		: false,
+                    helpers		: {
+                    title	: { type : 'inside' },
+                    buttons	: {}
+                    }
+                });
+            });
+            new Vue({
+                el: "#app",
+                data: {
+                    search: '',
+                    results: [],
+                    image: '',
+                    success: '',
+
+                },
+                mounted() {
+                    this.getAllBlog();
+                },
+                search(after, before) {
+                    this.searchfromDb();
+                },
+                watch: {
+                    search(after, before) {
+                        this.searchfromDb();
+                    }
+                 },
+                methods: {
+                    getAllBlog: function() {
+                        NProgress.start();
+                        $.get('/admin/blog/getBlog').then(response => {
+                            this.results = response.data;
+                        });
+                        NProgress.done();
+                    },
+                    searchfromDb: function() {
+                        $.get('/admin/blog/searchBlog?term=' + $.trim(this.search)).then(response => {
+                            this.results = response.data
+                        });
+
+                    },
+                    editItem: function(id) 
+                    {
+                           window.location.replace('/admin/blog/addblogs/'+id);
+
+                    },
+                    deleteItem: function(id) {
+
+                        this.$dialog.confirm("If you delete this record, it'll be gone forever.", {
+                                loader: true
+
+                            })
+                            .then((dialog) => {
+
+                                $.get('/admin/blog/deleteBlog/' + id).then(response => {
+                                    if (response.status === 'success') {
+                                        setTimeout(() => {
+                                            dialog.close();
+                                            $('.alert').addClass('alert-success').delay(1000).fadeOut();
+                                            msg = response.message;
+                                            this.success = msg;
+                                        }, 1000);
+
+
+
+                                        this.getAllBlog();
+                                    }
+                                });
+
+
+                            })
+                            .catch(() => {
+                                // Triggered when cancel button is clicked
+
+                                console.log('Delete aborted');
+                            });
+
+
+                    },
+                    getImgUrl: function(data) {
+                        if (data) {
+                            return './../uploads/blog/' + data
+                        } else {
+                            return './../images/image_upload.png'
+                        }
+                    }
+                }
+
+
+            })
+           
+

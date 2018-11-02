@@ -1,0 +1,104 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/vendor/bootstrap/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/vendor/font-awesome/css/font-awesome.min.css')
+    link(rel='stylesheet', href='/stylesheets/fontastic.css')
+    link(rel='stylesheet', href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700')
+    link(rel='stylesheet', href='/stylesheets/grasp_mobile_progress_circle-1.0.0.min.css')
+    link(rel='stylesheet', href='/vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css')
+    link(rel='stylesheet', href='/stylesheets/style.default.css')
+    link(rel='stylesheet', href='/stylesheets/custom.css')
+    link(rel='stylesheet', href='https://unpkg.com/nprogress@0.2.0/nprogress.css')
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script(src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js")
+    script(src="https://unpkg.com/nprogress@0.2.0/nprogress.js")
+  body
+    .main.container
+    .row.justify-content-center(id="app")
+      .col-md-6.col-md-offset-3
+        .card-group
+          .card.p-4
+              h1.display-4.m-b-2.logo.text-uppercase Register
+              form(method='POST')
+                div.form-group
+                  label(for='email') Full Name
+                  input.form-control(type='text' id='full_name', v-model="full_name", placeholder='Enter Your name' name='full_name')
+
+                div.form-group
+                  label(for='email') Email
+                  input.form-control(type='text' id='email', v-model="email", placeholder='Enter Your Email' name='email')
+                div.form-group
+                  label(for='password') Password
+                  input.form-control(type='password' id='password', v-model="password", placeholder='Enter your password' name='password')
+                div.form-group
+                  label(for='password') Confirm Password
+                  input.form-control(type='password' id='cpassword', v-model="cpassword", placeholder=' Confirm password' name='password')  
+                button.btn.btn-primary(type='button', v-on:click="register") Register 
+                a(href="/admin" class="") 
+                    |Back To Login
+
+                div.clearfix
+                br
+                div#msg
+                  {{msg}}
+    script.
+
+      new Vue({
+          el: "#app",
+          data: {
+             msg:'', 
+             email:'',
+             full_name:'',
+             password:'',
+             cpassword:'',
+              return:{
+                 
+              }
+              
+          },
+           methods: {
+              register:function(evt) {
+                evt.preventDefault();
+                NProgress.start();
+                $.post('/admin/createUser',{
+                  email: this.email,
+                  password: this.password,
+                  full_name:this.full_name,
+                  cpassword:this.cpassword,
+                 })
+                .then((response )=> {
+                  $('#msg').removeClass('alert alert-danger');
+                  $('#msg').removeClass('alert alert-success');
+                      if(response.status==='faild'){
+                         $('#msg').css('display','block'); 
+                         $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+                         this.msg=response.message[0].msg;
+                         NProgress.done();
+                       
+                      }else if(response.status==='authfaild'){
+                         $('#msg').css('display','block'); 
+                         $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+                         this.msg=response.msg.message;
+                         NProgress.done();
+                       
+                      }
+                      else{
+                         $('#msg').css('display','block'); 
+                         $('#msg').addClass('alert alert-success').delay(3000).fadeOut();
+                         this.msg=response.msg;
+                         this.email='';
+                         this.password='';
+                         this.full_name='';
+                         this.cpassword='';
+                         NProgress.done();
+                      }
+                      
+                  
+                })
+              },
+            
+         }
+        
+        })            

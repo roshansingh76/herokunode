@@ -1,0 +1,276 @@
+extends ./../../layout/adminlayout.jade
+block content
+    .row
+        .col-lg-12
+            .card
+                .card-header
+                    .row
+                        .col-sm-8
+                            h4 Add Blog
+                            
+                        .col-sm-4
+                            a.btn.btn-primary.pull-right(href="/admin/blog",) 
+                                i.fa.fa-backward  Back
+    section.forms
+        #app.container-fluid
+           form#frmblog(method="post", enctype="multipart/form-data") 
+            .row 
+                .col-lg-8
+                        .card
+                            .card-header.d-flex.align-items-center
+                                h4 Basic Info
+                            .card-body
+                                 .form-group
+                                     label Title
+                                     input(type="hidden"   name="id"  id="id" value="#{id}")
+                                     input(type="hidden"   name="editid" id="editid" value="#{id}"  )
+                                     input.form-control(type='text' id='title', v-model="form.title", placeholder='Enter title' name='title')
+                                 .form-group
+                                   textarea#myEditor()
+                                 .form-group
+                                    label(for="") SEO Meta title
+                                    input.form-control(type='text' id='meta_title', v-model="form.meta_title", placeholder='Enter meta title' name='meta_title')
+                                 .form-group
+                                    label(for="") SEO Meta Description
+                                    textarea.form-control(cols="85", rows="3" id='meta_description', v-model="form.meta_description", placeholder='Enter meta description' name='meta_description')
+                                 .form-group
+                                    label(for="") SEO Meta title
+                                    input.form-control(type='text' id='meta_keyword', v-model="form.meta_keyword", placeholder='Enter meta keyword' name='meta_keyword')
+                .col-lg-4
+                        .card
+                            .card-header.d-flex.align-items-center
+                                h4 Publish Status
+                            .card-body
+                                .form-group
+                                    select.form-control(name="status", id="status", v-model="form.status")
+                                            option(value='') Please Select Status
+                                            <option v-for="data in blogstatus" :value="data._id" > {{data.statusname}}</option>
+                                
+                                
+                            .card-header.d-flex.align-items-center
+                              h4 Category
+                            .card-body
+                                    .form-group
+                                        ul(style="list-style:none;float:left;margin-left:-40px;")
+                                            li(v-for="cat in category" )
+                                                <input name="category[]"    type="checkbox" v-bind:value="cat._id" :id="cat._id"  v-model="form.selectedcategory">
+                                                label(:for="cat._id") {{cat.category_name}}
+                                               
+                                    
+                            .card-header.d-flex.align-items-center
+                                h4 Featured Image
+                            .card-body  
+                                .custom-file-container(data-upload-id="myUniqueUploadId")
+                                    label 
+                                        |Remove Upload File
+                                        a.btn.custom-file-container__image-clear(style="font-size:24px" href="javascript:void(0)",title="Clear Image")
+                                            &times;
+                                    label.custom-file-container__custom-file
+                                        input.custom-file-container__custom-file__custom-file-input(v-on:change="handleFileUpload()" ,type="file", id="file" ref="file"  name="imgUploader" accept="image/*")                    
+                                        input(type="hidden" name="MAX_FILE_SIZE" value="10485760")
+                                        span.custom-file-container__custom-file__custom-file-control
+                                    div.custom-file-container__image-preview
+                                        <img scr="" id="image-preview" style="width:100%" />
+
+                            .card-header.d-flex.align-items-center
+                            .card-body  
+                                 .form-group
+                                    button.mr-3.btn.btn-primary(type="submit" @click.prevent="onSubmit()") 
+                                        |{{btn}}
+                                .form-group
+                                      .col-lg-12
+                                        #msg 
+                                            {{msg}}
+                                        
+
+
+        link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/froala-editor/2.8.5/css/froala_editor.min.css')
+        link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/froala-editor/2.8.5/css/froala_style.min.css')
+        link(rel='stylesheet', href='https://unpkg.com/file-upload-with-preview/dist/file-upload-with-preview.min.css')
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/froala-editor/2.8.5/js/froala_editor.min.js")
+        script(src="https://unpkg.com/file-upload-with-preview")
+        script.
+            $(function() {
+               $('#myEditor').froalaEditor({
+                   toolbarInline: false,
+                    height:350,
+                    imageUploadURL: 'image_upload',
+                    imageUploadParams: {
+                    id: 'myEditor'
+                    }
+                   })
+            });
+            $('.selector').froalaEditor('colors.background', '#001122');
+            $('.selector').froalaEditor('colors.text', '#001122');
+            $('.selector').froalaEditor('commands.clearFormatting');
+
+
+
+            new Vue({
+                el: "#app",
+                data:{
+                    results:[],
+                    errors:[],
+                    msg:'',
+                    parentcategory:'',
+                    blogstatus:[],
+                    image:'',
+                    file:'',
+                    btn:'Add Blog',
+                    category:[],
+                   form:{
+                        title:'',
+                        meta_title:'',
+                        meta_description:'',
+                        detail:'',
+                        meta_keyword:'',
+                        image:'',
+                        file: '',
+                        blogstatus:[],
+                        editid:'',
+                        status:'',
+                        selectedcategory:[],
+                      
+                       },
+                    },
+                mounted() {
+                    this.getCategory();
+                    this.getblogStatus();
+                    var id=$('#id').val();
+                    if(id){
+                        this.editData(id);
+                    }
+                },
+                computed: {
+                },
+                watch: {
+                },
+                methods: {
+                    getblogStatus:function(){
+                          $.get('/admin/blog/getblogStatus').then(response => {
+                             this.blogstatus = response.data;
+                         });
+                    },
+                    getCategory:function(){
+                          $.get('/admin/category/getCategory').then(response => {
+                             this.category = response.data;
+                         });
+                    },
+                    handleFileUpload:function(){
+                        this.file = this.$refs.file.files[0];
+                        $('#image-preview').remove();
+                    },
+                    editData:function(id){
+                        this.form.editid=id;
+                         var title='';
+                         var data,selected;
+                         var catData;
+                         this.btn='Edit Blog';
+                        $.get('/admin/blog/getEditdata/' + id).then(response => {
+                            if (response.status === 'success') {
+                                var xdata=response.data;
+                                this.form.title=xdata.blogdata[0].title;
+                                this.form.meta_title=xdata.blogdata[0].meta_title;
+                                this.form.meta_description=xdata.blogdata[0].meta_description;
+                                this.form.meta_keyword=xdata.blogdata[0].meta_keyword;
+                                var sel=xdata.blogdata[0].status;
+                                this.form.status=''+sel;
+                                var catData=xdata.blogcatdata;
+                                this.form.selectedcategory=catData;
+                                $('#myEditor').froalaEditor('html.set', xdata.blogdata[0].detail);
+                                if(xdata.blogdata[0].image){
+                                    $('.custom-file-container__image-preview').removeAttr('style');
+                                    $('#image-preview').attr('src','/../../uploads/blog/'+xdata.blogdata[0].image)
+                                }
+                            
+                            }
+                        });
+                      
+                    },
+                    onSubmit (evt) {
+                        this.msg ='';
+                        if (!this.form.title) {
+                            $('#msg').css('display','block'); 
+                            $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+                            this.msg='Blog title is required.';
+                            return false;
+                        }
+                        if (!this.form.status) {
+                            $('#msg').css('display','block'); 
+                            $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+                            this.msg='Blog status is required.';
+                            return false;
+                        } 
+                        
+                        $('#msg').removeClass('alert alert-success');
+                        $('#msg').removeClass('alert alert-danger');
+                        NProgress.start();
+                        var content= $('#myEditor').froalaEditor('html.get');
+
+                       
+                        var formData = new FormData($("#frmblog")[0]);
+                        formData.append('blogdetail', content);
+
+                        var str='';
+                        var status=1;
+                        $.ajax({
+                            url: '/admin/blog/saveBlog',
+                            type: 'POST',
+                            data: formData,
+                            contentType:'html',
+                            async: false,
+                            success: function (data) {
+                                $('#msg').css('display','block'); 
+                                $('#msg').removeClass('alert alert-success');
+                                $('#msg').removeClass('alert alert-danger');
+                                if(data.status==='success'){
+                                    $('#msg').addClass('alert alert-success').delay(3000).fadeOut();
+                                    str=data.message;
+                                    if(data.type){
+                                    }else{
+                                        status=2;
+                                        removeImage();
+                                    }
+                                    
+                                 }
+                                if(data.status==='faild'){
+                                       $('#msg').addClass('alert alert-danger').delay(3000).fadeOut();
+                                       str=data.message;
+                                       $.each(str, function(index,doc) {
+                                            str=doc.msg;
+                                       });  
+                                }
+                            },
+                            cache: false,
+                            contentType: false,
+                            processData: false
+                        });
+                        this.msg=str;
+                        if(status===2){
+                          this.reset();
+                        }
+                        NProgress.done();
+                    },
+
+                    uploadFile:function(){
+                      
+                    },
+                    reset:function(){
+                        this.form.title = '';
+                        this.form.meta_title = '';
+                        this.form.detail = '';
+                        this.form.status = '';
+                        this.form.meta_description ='';
+                        this.form.meta_keyword ='';
+                        this.form.category =[];
+                       
+                    }
+                }
+
+            })
+            var upload = new FileUploadWithPreview('myUniqueUploadId');
+            function removeImage(){
+             var upload = new FileUploadWithPreview('myUniqueUploadId');
+             $('.custom-file-container__custom-file__custom-file-control').html('');
+             
+            }
