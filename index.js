@@ -53,7 +53,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(__dirname + "/node_modules/bootstrap/dist"));
 app.listen(process.env.PORT || 5000);
 
-var store = new MongoDBStore({
+/*var store = new MongoDBStore({
   uri: url,
   collection: "session"
 });
@@ -66,7 +66,7 @@ store.on("connected", function() {
 store.on("error", function(error) {
   assert.ifError(error);
   assert.ok(false);
-});
+});*/
 
 
 app.use(
@@ -75,7 +75,7 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
     },
-    store: store,
+   // store: store,
     resave: true,
     saveUninitialized: true
   })
