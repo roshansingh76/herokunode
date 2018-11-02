@@ -44,17 +44,9 @@ export default {
   methods: {
     onSubmit (evt) {
       evt.preventDefault();
-			NProgress.start();
-			$.post('https:/rgyan.com/api/checkLogin',{
-				mobile: this.mobile,
-				
-			})
-			.then(response => {
-					
-				this.$router.push('/otp');
-			}).catch(error => {
-				console.log(error);
-			})
+      NProgress.start();
+      this.$router.push('/otp');
+		
       //alert(JSON.stringify(this.form));
     },
     onReset (evt) {
